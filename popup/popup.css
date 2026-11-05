@@ -1,0 +1,118 @@
+@import url('../css/theme.css');
+
+body {
+  width: 380px;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+}
+
+main textarea {
+  min-height: 96px;
+}
+
+.actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actions-row .actions {
+  width: 100%;
+}
+
+.actions-row .primary {
+  flex: 1;
+}
+
+.output-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.output {
+  min-height: 96px;
+  max-height: 190px;
+  overflow: auto;
+  padding: 9px 10px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.output:empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted);
+}
+
+body[data-busy='true'] .output::after {
+  content: '▌';
+  margin-left: 1px;
+  animation: blink 1s steps(2, start) infinite;
+  color: var(--primary);
+}
+
+@keyframes blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+.hint.footer {
+  padding: 0 12px 10px;
+}
+
+.explain-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.explain-list {
+  margin: 0;
+  padding: 9px 10px 9px 26px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  max-height: 130px;
+  overflow: auto;
+}
+
+.explain-list li {
+  margin: 0 0 4px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.explain-list li:last-child {
+  margin-bottom: 0;
+}
+
+.explain-list li::marker {
+  color: var(--primary);
+}

@@ -1,0 +1,10 @@
+# Node / build
+node_modules/
+dist/
+
+# System
+.DS_Store
+
+# Khoá khi dùng chrome --pack-extension
+*.pem
+*.crx

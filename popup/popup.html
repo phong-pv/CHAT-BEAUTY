@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>ChatBeauty</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <div class="brand">
+        <img src="../assets/icon-32.png" alt="" width="18" height="18" />
+        <span>ChatBeauty</span>
+      </div>
+      <button id="open-settings" class="ghost small" type="button" title="API key &amp; model">
+        Settings
+      </button>
+    </header>
+
+    <main>
+      <label class="field" for="input">
+        <span class="label">
+          Đoạn chat của bạn
+          <em id="counter" class="counter">0 / 8000</em>
+        </span>
+        <textarea
+          id="input"
+          rows="6"
+          maxlength="8000"
+          spellcheck="false"
+          aria-describedby="footer-hint"
+          placeholder="Dán tin nhắn tiếng Anh cần sửa, hoặc tiếng Việt cần dịch sang tiếng Anh…"
+        ></textarea>
+      </label>
+
+      <div class="row">
+        <label class="field grow" for="tone">
+          <span class="label">Giọng điệu</span>
+          <select id="tone"></select>
+        </label>
+        <label class="field grow" for="direction">
+          <span class="label">Hướng</span>
+          <select id="direction"></select>
+        </label>
+      </div>
+
+      <div class="actions-row">
+        <div class="actions">
+          <button id="stop" class="ghost danger" type="button" hidden>Dừng</button>
+          <button id="improve" class="primary" type="button" disabled>Viết lại</button>
+        </div>
+      </div>
+
+      <p id="status" class="status" role="status" data-kind="info"></p>
+
+      <section class="output-wrap">
+        <div class="label-row">
+          <span class="label">
+            Kết quả
+            <em id="mode-badge" class="badge" title="Chưa có API key nên đang chạy dữ liệu giả lập">mock</em>
+          </span>
+          <div class="mini-actions">
+            <button id="explain" class="ghost small" type="button" disabled title="Cần API key để giải thích">
+              Giải thích
+            </button>
+            <button id="copy" class="ghost small" type="button" disabled>Sao chép</button>
+          </div>
+        </div>
+        <div
+          id="output"
+          class="output"
+          role="log"
+          aria-label="Kết quả"
+          aria-live="polite"
+          aria-atomic="false"
+          aria-busy="false"
+          tabindex="0"
+          data-placeholder="Kết quả sẽ hiện ở đây."
+        ></div>
+      </section>
+
+      <section id="explain-wrap" class="explain-wrap" aria-labelledby="explain-label" hidden>
+        <span class="label" id="explain-label">Vì sao sửa</span>
+        <ul id="explain-list" class="explain-list" aria-live="polite" aria-atomic="true"></ul>
+      </section>
+    </main>
+
+    <footer class="hint footer" id="footer-hint">
+      Ctrl/⌘ + Enter để viết lại · Esc để dừng · Kết quả giữ lại khi mở lại popup
+    </footer>
+    <div id="toast" class="toast" role="alert" hidden></div>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

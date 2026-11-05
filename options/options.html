@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <title>ChatBeauty — Settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="page-head">
+        <img src="../assets/icon-48.png" alt="" width="32" height="32" />
+        <div>
+          <h1>ChatBeauty Settings</h1>
+          <p class="hint">
+            BYOK: API key của bạn được lưu cục bộ trong Chrome và chỉ gửi tới provider bạn chọn.
+          </p>
+        </div>
+      </header>
+
+      <section class="card">
+        <h2>Provider</h2>
+        <div class="grid2">
+          <label class="field" for="provider">
+            <span class="label">Nhà cung cấp</span>
+            <select id="provider"></select>
+          </label>
+          <label class="field" for="model">
+            <span class="label">Model</span>
+            <input id="model" type="text" spellcheck="false" placeholder="gpt-4o-mini" />
+          </label>
+        </div>
+        <label class="field" for="baseUrl">
+          <span class="label">Base URL</span>
+          <input id="baseUrl" type="url" spellcheck="false" placeholder="https://api.openai.com/v1" />
+        </label>
+        <p class="hint preset-hint">
+          <a id="key-link" target="_blank" rel="noopener" hidden>Lấy API key ↗</a>
+          <span id="preset-hint"></span>
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>API key</h2>
+        <div class="grid2">
+          <label class="field" for="apiKey">
+            <span class="label">Key mới</span>
+            <input
+              id="apiKey"
+              type="password"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="Dán key vào đây rồi bấm Lưu"
+            />
+          </label>
+          <div class="field">
+            <span class="label">Đang lưu</span>
+            <div id="key-mask" class="mask">(chưa có key)</div>
+          </div>
+        </div>
+        <div class="row-actions">
+          <button id="clear-key" class="ghost danger" type="button">Xoá key đã lưu</button>
+          <span class="hint">Key lưu dạng plaintext trong profile Chrome — ai dùng máy này đều đọc được.</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Mặc định cho popup</h2>
+        <div class="grid2">
+          <label class="field" for="tone">
+            <span class="label">Giọng điệu</span>
+            <select id="tone"></select>
+          </label>
+          <label class="field" for="direction">
+            <span class="label">Hướng</span>
+            <select id="direction"></select>
+          </label>
+        </div>
+        <p class="hint" id="direction-hint"></p>
+      </section>
+
+      <div class="bar-actions">
+        <button id="save" class="primary" type="button">Lưu</button>
+        <button id="test" class="ghost" type="button">Kiểm tra kết nối</button>
+        <span id="status" class="status" role="status" data-kind="info"></span>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

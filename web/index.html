@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="ChatBeauty" />
+    <meta name="theme-color" content="#4f46e5" />
+    <title>ChatBeauty</title>
+    <link rel="icon" href="../assets/icon-32.png" />
+    <link rel="apple-touch-icon" href="../assets/icon-128.png" />
+    <link rel="stylesheet" href="web.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <div class="brand">
+        <img src="../assets/icon-32.png" alt="" width="22" height="22" />
+        <span>ChatBeauty</span>
+      </div>
+      <button id="toggle-settings" class="ghost small" type="button" aria-expanded="false" aria-controls="settings">
+        Cài đặt
+      </button>
+    </header>
+
+    <main>
+      <section id="settings" class="card" hidden>
+        <div class="grid2">
+          <label class="field" for="provider">
+            <span class="label">Nhà cung cấp</span>
+            <select id="provider"></select>
+          </label>
+          <label class="field" for="model">
+            <span class="label">Model</span>
+            <input id="model" type="text" spellcheck="false" autocapitalize="off" placeholder="gpt-4o-mini" />
+          </label>
+        </div>
+        <label class="field" for="baseUrl">
+          <span class="label">Base URL</span>
+          <input id="baseUrl" type="url" spellcheck="false" autocapitalize="off" placeholder="https://api.openai.com/v1" />
+        </label>
+        <label class="field" for="apiKey">
+          <span class="label">API key <em id="key-mask" class="counter">(chưa có)</em></span>
+          <input id="apiKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Dán API key của bạn" />
+        </label>
+        <div class="row-actions">
+          <button id="save" class="ghost small" type="button">Lưu</button>
+          <button id="test" class="ghost small" type="button">Kiểm tra kết nối</button>
+        </div>
+        <p class="hint">
+          Key chỉ lưu trong localStorage của trình duyệt này. Không có server trung gian. Dùng chung máy thì nên xoá key
+          sau khi dùng.
+        </p>
+      </section>
+
+      <label class="field" for="input">
+        <span class="label">
+          Tin nhắn
+          <em id="counter" class="counter">0 / 8000</em>
+        </span>
+        <textarea
+          id="input"
+          rows="6"
+          maxlength="8000"
+          spellcheck="false"
+          placeholder="Dán tin nhắn tiếng Anh cần sửa, hoặc tiếng Việt cần dịch sang tiếng Anh…"
+        ></textarea>
+      </label>
+
+      <div class="grid2">
+        <label class="field" for="tone">
+          <span class="label">Giọng điệu</span>
+          <select id="tone"></select>
+        </label>
+        <label class="field" for="direction">
+          <span class="label">Hướng</span>
+          <select id="direction"></select>
+        </label>
+      </div>
+
+      <div class="actions-row">
+        <button id="stop" class="ghost danger" type="button" hidden>Dừng</button>
+        <button id="improve" class="primary" type="button" disabled>Viết lại</button>
+      </div>
+
+      <p id="status" class="status" role="status" data-kind="info"></p>
+
+      <section class="output-wrap">
+        <div class="label-row">
+          <span class="label">Kết quả</span>
+          <div class="mini-actions">
+            <button id="explain" class="ghost small" type="button" disabled>Giải thích</button>
+            <button id="copy" class="ghost small" type="button" disabled>Sao chép</button>
+          </div>
+        </div>
+        <div
+          id="output"
+          class="output"
+          role="log"
+          aria-label="Kết quả"
+          aria-live="polite"
+          aria-busy="false"
+          tabindex="0"
+          data-placeholder="Kết quả sẽ hiện ở đây."
+        ></div>
+      </section>
+
+      <section id="explain-wrap" class="explain-wrap" aria-labelledby="explain-label" hidden>
+        <span class="label" id="explain-label">Vì sao sửa</span>
+        <ul id="explain-list" class="explain-list" aria-live="polite" aria-atomic="true"></ul>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" hidden></div>
+    <script type="module" src="web.js"></script>
+  </body>
+</html>

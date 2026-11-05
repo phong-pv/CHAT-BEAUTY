@@ -1,0 +1,12 @@
+{
+  "name": "chatbeauty",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Chrome extension: polish English chat messages with your own AI API key.",
+  "scripts": {
+    "icons": "node scripts/make-icons.mjs",
+    "pack": "node scripts/pack.mjs",
+    "test": "node --test scripts/"
+  }
+}
