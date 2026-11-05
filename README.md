@@ -135,7 +135,7 @@ Không bundler, không runtime dependency — sửa file rồi **Reload** extens
 - Chưa có lịch sử nhiều phiên; state chỉ sống 6 giờ / đến khi đóng browser.
 - Chưa hỗ trợ dịch Anh → Việt.
 - Model id mặc định của Gemini/Anthropic có thể thay đổi theo thời điểm — sửa trong Settings nếu báo không tìm thấy model.
-- Chưa test với provider thật trong môi trường phát triển (xem `docs/plan-mvp.md` – ghi chú P3).
+- Đã test với provider thật trong môi trường phát triển (xem `docs/plan-mvp.md` – ghi chú P3).
 
 ## Tài liệu
 
