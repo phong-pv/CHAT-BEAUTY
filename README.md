@@ -14,7 +14,10 @@ Dán tin nhắn  →  chọn giọng điệu / hướng  →  Viết lại  → 
 - **Tự đoán hướng**: có tiếng Việt → dịch sang tiếng Anh, còn lại → sửa tiếng Anh. Đổi tay được bằng select **Hướng**.
 - **5 giọng điệu**: Natural · Professional · Casual · Concise · Friendly.
 - **Streaming**: kết quả hiện dần, bấm **Dừng** (hoặc `Esc`) là ngắt, giữ phần đã nhận.
-- **Giải thích**: 2–4 bullet tiếng Việt vì sao câu được sửa.
+- **Hiện thay đổi** (diff): bôi màu phần thêm (gạch chân xanh) / phần bị bỏ (gạch ngang) — chỉ với chiều Anh → Anh.
+- **Giải thích**: 2–4 bullet tiếng Việt vì sao câu được sửa (cũng stream dần).
+- **Lịch sử 30 lần**: nạp lại kết quả cũ, xoá từng mục hoặc xoá hết — lưu trên máy, không lên cloud.
+- **Ghi chú riêng cho AI**: "không dùng em dash", "gọi tôi là Phong"… chèn vào prompt mỗi lần chạy.
 - **Không mất chữ**: đóng popup rồi mở lại vẫn còn input + kết quả (session 6 giờ).
 - **8 provider**: OpenAI, OpenRouter, Groq, DeepSeek, Google Gemini, Anthropic, Ollama (local), Custom (OpenAI-compatible).
 
@@ -66,8 +69,9 @@ Chưa có key vẫn dùng thử được UI ở chế độ **mock** (kết qu�
 
 ## Dùng
 
-- Dán tin nhắn → chọn **Giọng điệu** và **Hướng** → **Viết lại** (hoặc `Ctrl/⌘ + Enter`).
-- **Sao chép** để lấy kết quả; **Giải thích** để xem vì sao sửa; **Dừng**/`Esc` để ngắt giữa stream.
+- Dán tin nhắn → chọn **Giọng điệu** và **Hướng** → **Viết lại** (hoặc `Ctrl/⌘ + Enter`, hoặc `Alt+Shift+C` để mở popup).
+- **Sao chép** để lấy kết quả; **Hiện thay đổi** để xem chỗ được sửa; **Giải thích** để xem vì sao; **Dừng**/`Esc` để ngắt.
+- **Lịch sử** (30 lần gần nhất) ở cuối popup: bấm 1 mục để nạp lại, `×` để xoá mục, **Xoá hết** để dọn.
 - Tối đa 8000 ký tự mỗi lần.
 
 ## Trên iPhone / iPad
@@ -114,13 +118,15 @@ Port thành Safari web extension cũng được nhưng cần macOS + Xcode + App
 | `Không kết nối được tới <host>` | mạng chặn, base URL sai, thiếu quyền host | kiểm tra Base URL, cấp lại quyền host |
 | Badge vẫn là `mock` | chưa lưu key | Settings → **Lưu** |
 | Kết quả trống | model trả nội dung rỗng | thử lại / đổi model |
+| **Kết quả chỉ 1 câu / bị cụt** | model dừng vì hết budget token, hoặc model không phù hợp (vd model code) | extension đã tự thử lại 1 lần với budget ×2; nếu vẫn cảnh báo `warn` thì **đổi model** (vd `gpt-4o-mini`, `llama-3.3-70b`) — tránh model chuyên code/reasoning cho việc viết lại |
 
 ## Phát triển
 
 ```bash
-npm test          # 58 test cho lib/ + web/store.js (Node, không cần Chrome, không cần key)
-npm run icons     # sinh lại assets/icon-*.png
-npm run pack      # đóng gói dist/chatbeauty-<version>.zip
+npm test               # 70 test cho lib/ + web/store.js (Node, không cần Chrome, không cần key)
+npm run verify:provider -- --provider groq --key gsk_xxx   # kiểm chứng thật với provider (mask key)
+npm run icons          # sinh lại assets/icon-*.png
+npm run pack           # đóng gói dist/chatbeauty-<version>.zip
 ```
 
 Cấu trúc: `popup/` (UI chính) · `options/` (BYOK) · `lib/providers.js` (HTTP + streaming 3 protocol) ·

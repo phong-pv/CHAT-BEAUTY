@@ -59,6 +59,9 @@
             <em id="mode-badge" class="badge" title="Chưa có API key nên đang chạy dữ liệu giả lập">mock</em>
           </span>
           <div class="mini-actions">
+            <button id="toggle-diff" class="ghost small" type="button" hidden aria-pressed="false" title="Chỉ dùng được khi Anh → Anh">
+              Hiện thay đổi
+            </button>
             <button id="explain" class="ghost small" type="button" disabled title="Cần API key để giải thích">
               Giải thích
             </button>
@@ -81,6 +84,19 @@
       <section id="explain-wrap" class="explain-wrap" aria-labelledby="explain-label" hidden>
         <span class="label" id="explain-label">Vì sao sửa</span>
         <ul id="explain-list" class="explain-list" aria-live="polite" aria-atomic="true"></ul>
+      </section>
+
+      <section id="history-wrap" class="history-wrap" aria-labelledby="history-label" hidden>
+        <div class="label-row">
+          <span class="label" id="history-label">
+            Lịch sử
+            <em id="history-count" class="counter"></em>
+          </span>
+          <div class="mini-actions">
+            <button id="history-clear" class="ghost small" type="button">Xoá hết</button>
+          </div>
+        </div>
+        <ul id="history-list" class="history-list"></ul>
       </section>
     </main>
 

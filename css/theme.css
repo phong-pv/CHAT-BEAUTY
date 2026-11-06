@@ -181,6 +181,12 @@ button.small {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+
+.label-row .label {
+  white-space: nowrap;
 }
 
 .badge {
@@ -223,6 +229,81 @@ button.small {
 
 .status[data-kind='warn'] {
   color: var(--warn);
+}
+
+/* ---------- diff highlight (U1) ---------- */
+
+.diff-add {
+  background: color-mix(in srgb, var(--ok) 26%, transparent);
+  border-radius: 3px;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--ok) 60%, transparent);
+}
+
+.diff-del {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--danger);
+}
+
+/* ---------- lịch sử (U3) ---------- */
+
+.history-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.history-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 150px;
+  overflow: auto;
+}
+
+.history-list li {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.history-item {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  padding: 6px 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-item:hover {
+  border-color: var(--primary);
+}
+
+.history-remove {
+  padding: 0 8px;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.history-remove:hover {
+  color: var(--danger);
+  border-color: currentColor;
 }
 
 .hint {

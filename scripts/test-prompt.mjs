@@ -6,6 +6,7 @@ import {
   DEFAULT_DIRECTION,
   DEFAULT_TONE,
   DIRECTIONS,
+  MAX_CUSTOM_INSTRUCTIONS,
   TONES,
   buildExplainMessages,
   buildMessages,
@@ -113,6 +114,29 @@ test('buildMessages: tôn trọng direction ép tay + maxChars', () => {
   const plan = buildMessages({ text: 'hello there', direction: 'vi-to-en', maxChars: 5 });
   assert.equal(plan.direction, 'vi-to-en');
   assert.equal(plan.messages[1].content, '<msg>\nhello\n</msg>');
+});
+
+test('systemFor: custom instructions được chèn trong <prefs>', () => {
+  const prompt = systemFor('en-polish', 'natural', 'Không dùng em dash. Gọi tôi là Phong.');
+  assert.match(prompt, /User standing preferences/);
+  assert.match(prompt, /<prefs>\nKhông dùng em dash\. Gọi tôi là Phong\.\n<\/prefs>/);
+});
+
+test('systemFor: custom instructions rỗng/whitespace → không thêm gì', () => {
+  const base = systemFor('en-polish', 'natural');
+  assert.ok(!/<prefs>/.test(systemFor('en-polish', 'natural', '   ')));
+  assert.equal(systemFor('en-polish', 'natural', '   '), base);
+});
+
+test('systemFor: custom instructions bị cắt ở 300 ký tự', () => {
+  const prompt = systemFor('en-polish', 'natural', 'x'.repeat(500));
+  const prefs = prompt.split('<prefs>\n')[1].split('\n</prefs>')[0];
+  assert.equal(prefs.length, MAX_CUSTOM_INSTRUCTIONS);
+});
+
+test('buildMessages: truyền custom instructions vào system prompt', () => {
+  const plan = buildMessages({ text: 'hi there', customInstructions: 'Gọi tôi là Phong' });
+  assert.match(plan.messages[0].content, /<prefs>\nGọi tôi là Phong\n<\/prefs>/);
 });
 
 test('buildExplainMessages: gói 2 bản trong tag riêng, maxTokens 400', () => {

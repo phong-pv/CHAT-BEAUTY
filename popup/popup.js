@@ -3,19 +3,22 @@ import {
   DEFAULT_TONE,
   DIRECTIONS,
   MAX_OUTPUT_TOKENS,
+  PROMPT_VERSION,
   TONES,
   buildExplainMessages,
   buildMessages,
 } from '../lib/prompt.js';
-import { PROVIDER_PRESETS, generate, request } from '../lib/providers.js';
+import { PROVIDER_PRESETS, generate } from '../lib/providers.js';
 import {
   getSessionState,
   getSettings,
   hasApiKey,
+  historyStore,
   saveSessionState,
   saveSettings,
 } from '../lib/storage.js';
-import { $, copyText, setStatus, showToast } from '../lib/ui.js';
+import { $, copyText, renderDiff, setStatus, showToast } from '../lib/ui.js';
+import { diffWords, hasVisibleChange } from '../lib/diff.js';
 
 const MAX_CHARS = 8000;
 const INPUT_SAVE_DEBOUNCE_MS = 400;
@@ -33,6 +36,11 @@ const els = {
   explain: $('#explain'),
   explainWrap: $('#explain-wrap'),
   explainList: $('#explain-list'),
+  toggleDiff: $('#toggle-diff'),
+  historyWrap: $('#history-wrap'),
+  historyList: $('#history-list'),
+  historyCount: $('#history-count'),
+  historyClear: $('#history-clear'),
   badge: $('#mode-badge'),
   settings: $('#open-settings'),
 };
@@ -46,6 +54,12 @@ let explainText = '';
 /** @type {Awaited<ReturnType<typeof getSettings>>|null} */
 let settings = null;
 let inputSaveTimer = 0;
+/** Input + hướng của lần chạy gần nhất (dùng cho diff). */
+let lastRunInput = '';
+let lastDirection = '';
+let diffMode = false;
+/** @type {Array<{ts:number, input:string, output:string, model:string}>} */
+let historyItems = [];
 
 for (const tone of TONES) els.tone.append(new Option(tone.label, tone.id));
 for (const direction of DIRECTIONS) els.direction.append(new Option(direction.label, direction.id));
@@ -61,6 +75,8 @@ els.copy.addEventListener('click', onCopy);
 els.tone.addEventListener('change', () => persist({ tone: els.tone.value }));
 els.direction.addEventListener('change', () => persist({ direction: els.direction.value }));
 els.settings.addEventListener('click', () => chrome.runtime.openOptionsPage());
+els.toggleDiff.addEventListener('click', toggleDiffMode);
+els.historyClear.addEventListener('click', clearHistory);
 document.addEventListener('keydown', onKeyDown);
 
 init();
@@ -84,8 +100,12 @@ async function init() {
     els.input.value = loadedSession.input ?? '';
     output = loadedSession.output ?? '';
   }
+  lastRunInput = loadedSession?.input ?? els.input.value;
   renderOutput();
   renderExplain(loadedSession?.explain ?? '');
+
+  historyItems = await historyStore.list().catch(() => []);
+  renderHistory();
 
   renderBadge();
   syncState();
@@ -105,7 +125,7 @@ function renderBadge() {
   const label = PROVIDER_PRESETS[settings.provider]?.label ?? settings.provider;
   els.badge.textContent = live ? label : 'mock';
   els.badge.title = live
-    ? `${label} · ${settings.model}\n${settings.baseUrl}`
+    ? `${label} · ${settings.model}\n${settings.baseUrl}\nprompt ${PROMPT_VERSION}`
     : 'Chưa có API key — đang chạy dữ liệu giả lập. Mở Settings để nhập key.';
   els.badge.classList.toggle('ok', live);
 }
@@ -144,6 +164,15 @@ function syncState() {
   els.stop.hidden = !busy;
   els.copy.disabled = output.length === 0;
 
+  const canDiff = output.length > 0 && lastDirection === 'en-polish';
+  if (!canDiff && diffMode) {
+    diffMode = false;
+    renderOutput();
+  }
+  els.toggleDiff.hidden = !canDiff;
+  els.toggleDiff.textContent = diffMode ? 'Ẩn thay đổi' : 'Hiện thay đổi';
+  els.toggleDiff.setAttribute('aria-pressed', String(diffMode));
+
   els.explain.disabled = busy || output.length === 0 || !live;
   els.explain.title = !live
     ? 'Cần API key để giải thích'
@@ -168,12 +197,20 @@ async function improve() {
   const text = els.input.value.trim();
   if (!text || controller) return;
 
-  const plan = buildMessages({ text, direction: els.direction.value, tone: els.tone.value });
+  const plan = buildMessages({
+    text,
+    direction: els.direction.value,
+    tone: els.tone.value,
+    customInstructions: settings?.customInstructions ?? '',
+  });
   const directionLabel = DIRECTIONS.find((item) => item.id === plan.direction)?.label ?? plan.direction;
   const live = Boolean(settings && hasApiKey(settings));
 
   controller = new AbortController();
   output = '';
+  lastRunInput = text;
+  lastDirection = plan.direction;
+  diffMode = false;
   renderOutput();
   renderExplain('');
   setStatus(els.status, '');
@@ -214,6 +251,8 @@ async function improve() {
       } else {
         setStatus(els.status, head, 'ok');
       }
+
+      await addHistory(text, plan.direction);
     } else {
       await streamMock(text, { signal: controller.signal, onDelta: append });
       setStatus(
@@ -246,12 +285,18 @@ async function explainChanges() {
   syncState();
 
   try {
-    const { text } = await request({
+    renderExplain('');
+    let streamed = '';
+    const { text } = await generate({
       config: providerConfig(),
       messages: plan.messages,
       maxTokens: plan.maxTokens,
       temperature: 0,
       signal: controller.signal,
+      onDelta: (chunk) => {
+        streamed += chunk;
+        renderExplain(streamed);
+      },
     });
     renderExplain(text);
     setStatus(els.status, 'Đã giải thích thay đổi.', 'ok');
@@ -271,8 +316,92 @@ async function explainChanges() {
 }
 
 function renderOutput() {
+  if (diffMode && lastDirection === 'en-polish' && lastRunInput && output) {
+    const segments = diffWords(lastRunInput, output);
+    renderDiff(els.output, hasVisibleChange(segments) ? segments : [{ op: 'same', text: output }]);
+    els.output.scrollTop = 0;
+    return;
+  }
   els.output.textContent = output;
   els.output.scrollTop = els.output.scrollHeight;
+}
+
+function toggleDiffMode() {
+  diffMode = !diffMode;
+  renderOutput();
+  syncState();
+}
+
+// ---------------------------------------------------------------------------
+// Lịch sử (U3)
+// ---------------------------------------------------------------------------
+
+function renderHistory() {
+  els.historyList.textContent = '';
+  els.historyWrap.hidden = historyItems.length === 0;
+  els.historyCount.textContent = historyItems.length ? `${historyItems.length} mục` : '';
+
+  for (const item of historyItems) {
+    const li = document.createElement('li');
+
+    const open = document.createElement('button');
+    open.type = 'button';
+    open.className = 'history-item';
+    open.textContent = item.input.replace(/\s+/g, ' ').slice(0, 80) || '(trống)';
+    open.title = item.input;
+    open.addEventListener('click', () => loadHistoryEntry(item));
+
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'history-remove';
+    remove.textContent = '×';
+    remove.title = 'Xoá mục này';
+    remove.setAttribute('aria-label', 'Xoá mục lịch sử');
+    remove.addEventListener('click', () => removeHistoryEntry(item.ts));
+
+    li.append(open, remove);
+    els.historyList.append(li);
+  }
+}
+
+function loadHistoryEntry(item) {
+  els.input.value = item.input;
+  output = item.output;
+  lastRunInput = item.input;
+  lastDirection = item.direction === 'vi-to-en' ? 'vi-to-en' : 'en-polish';
+  diffMode = false;
+  renderOutput();
+  renderExplain('');
+  syncState();
+  setStatus(els.status, 'Đã nạp từ lịch sử.', 'ok');
+  scheduleInputSave();
+}
+
+async function removeHistoryEntry(ts) {
+  historyItems = await historyStore.remove(ts).catch(() => historyItems);
+  renderHistory();
+  syncState();
+}
+
+async function clearHistory() {
+  historyItems = await historyStore.clear().catch(() => []);
+  renderHistory();
+  syncState();
+}
+
+async function addHistory(input, direction) {
+  try {
+    historyItems = await historyStore.add({
+      input,
+      output,
+      tone: els.tone.value,
+      direction,
+      model: settings?.model ?? '',
+    });
+    renderHistory();
+  } catch {
+    /* lịch sử là phụ — lỗi không được làm hỏng luồng chính */
+  }
 }
 
 function renderExplain(text) {

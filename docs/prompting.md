@@ -19,9 +19,11 @@ Spec cho `lib/prompt.js` (`buildMessages` ở P3). Hiện file này mới có `T
 
 Sai nhận diện luôn sửa được bằng tay: user đổi select **Hướng** ngay trên popup (ghi vào settings).
 
-## 2. System prompt (đã implement trong `lib/prompt.js` — prompt v2)
+## 2. System prompt (đã implement trong `lib/prompt.js` — prompt v2, `PROMPT_VERSION = 'v2'`)
 
 `systemFor(direction, tone)` = base + hướng + tone, nối bằng dòng trống.
+Tăng `PROMPT_VERSION` mỗi khi sửa nội dung prompt; version hiện trong tooltip badge, Options và bản web
+(để biết kết quả "tệ hơn" là do model hay do prompt).
 
 **Base** (mọi request viết lại/dịch):
 ```
@@ -74,6 +76,16 @@ The message is already in English. Fix grammar, articles, tense, subject-verb ag
 > bị rỗng nên 4/5 tone mới có tác dụng. v2 thêm luật "minimal edits", hướng dẫn dịch theo ý + kính ngữ Việt,
 > và làm rõ từng tone. Xem `docs/decisions.md` #23.
 
+**Ghi chú riêng của user** (`customInstructions`, ≤ 300 ký tự) — chèn ở cuối, trong `<prefs>`:
+```
+User standing preferences (follow unless they conflict with the rules above):
+<prefs>
+Không dùng em dash. Gọi tôi là Phong.
+</prefs>
+```
+Đây là **dữ liệu của user**, không phải chỉ dẫn hệ thống: nếu mâu thuẫn thì luật phía trên thắng (để user không
+vô tình phá các bất biến ở §5). Xem decisions #34.
+
 ## 3. Request
 
 ```js
@@ -88,7 +100,9 @@ The message is already in English. Fix grammar, articles, tense, subject-verb ag
 ```
 
 - `direction` trong kết quả là hướng **đã resolve** → popup dùng để hiện nhãn trong status.
-- `maxTokensFor(text) = min(1600, ceil(len / 2) + 200)`.
+- `maxTokensFor(text) = min(4000, max(1024, ceil(len / 2) + 700))` — **min 1024 / cap 4000**.
+  Bản cũ (`min(1600, … + 200)`) quá sát: input 324 ký tự chỉ được 362 token → model dừng giữa câu, output cụt.
+  `maxTokens` chỉ là **trần**, không phải chi phí thực, nên đặt rộng an toàn hơn.
 - `temperature: 0.4` (đặt ở `generate()`/`request()`), text bị `slice(0, maxChars)` trước khi gửi.
 - Không gửi `tone`/`direction` dưới dạng tham số API — chỉ nhúng trong system prompt (để chạy được với mọi provider).
 - Không gửi history, không gửi context ngoài đoạn user dán.

@@ -184,7 +184,7 @@ test('request: 401 → message tiếng Việt, settings=true, không lộ key', 
 test('request: 429 → retryable, giữ message của provider', async () => {
   stubFetch(() => jsonResponse({ error: { message: 'Rate limit reached' } }, 429));
   await assert.rejects(
-    () => request({ config: OPENAI, messages: MESSAGES }),
+    () => request({ config: OPENAI, messages: MESSAGES, retries: 0 }),
     (error) => {
       assert.equal(error.retryable, true);
       assert.match(error.message, /rate limit/i);
@@ -199,7 +199,7 @@ test('request: lỗi mạng → message có host', async () => {
     throw new TypeError('Failed to fetch');
   };
   await assert.rejects(
-    () => request({ config: OPENAI, messages: MESSAGES }),
+    () => request({ config: OPENAI, messages: MESSAGES, retries: 0 }),
     (error) => {
       assert.match(error.message, /Không kết nối được tới api\.openai\.com/);
       assert.equal(error.retryable, true);
@@ -216,7 +216,7 @@ test('request: 200 nhưng không phải JSON → báo lỗi đọc dữ liệu',
       throw new SyntaxError('Unexpected token <');
     },
   });
-  await assert.rejects(() => request({ config: OPENAI, messages: MESSAGES }), /không đọc được/);
+  await assert.rejects(() => request({ config: OPENAI, messages: MESSAGES, retries: 0 }), /không đọc được/);
 });
 
 test('request: config sai thì không gọi mạng', async () => {
@@ -395,12 +395,12 @@ test('generate: abort giữa stream → AbortError, giữ phần đã nhận', a
 
 test('generate: stream toàn delta rỗng → báo nội dung rỗng', async () => {
   stubFetch(() => streamResponse([sse({ choices: [{ delta: {} }] }), 'data: [DONE]\n\n']));
-  await assert.rejects(() => generate({ config: OPENAI, messages: MESSAGES }), /nội dung rỗng/);
+  await assert.rejects(() => generate({ config: OPENAI, messages: MESSAGES, retries: 0 }), /nội dung rỗng/);
 });
 
 test('generate: không có payload nào → báo stream không hợp lệ', async () => {
   stubFetch(() => streamResponse([': ping\n\n', 'data: [DONE]\n\n']));
-  await assert.rejects(() => generate({ config: OPENAI, messages: MESSAGES }), /stream hợp lệ/);
+  await assert.rejects(() => generate({ config: OPENAI, messages: MESSAGES, retries: 0 }), /stream hợp lệ/);
 });
 
 // ---------------------------------------------------------------------------
@@ -466,4 +466,100 @@ test('request: trả finishReason/truncated cho non-stream', async () => {
   const result = await request({ config: OPENAI, messages: MESSAGES });
   assert.equal(result.finishReason, 'length');
   assert.equal(result.truncated, true);
+});
+
+// ---------------------------------------------------------------------------
+// Retry + timeout (R2)
+// ---------------------------------------------------------------------------
+
+test('request: 429 lần đầu → tự retry 1 lần rồi thành công', async () => {
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    if (calls === 1) return jsonResponse({ error: { message: 'rate limited' } }, 429);
+    return jsonResponse({ choices: [{ message: { content: 'ok' } }] });
+  };
+  const result = await request({ config: OPENAI, messages: MESSAGES, retryDelayMs: 0 });
+  assert.equal(result.text, 'ok');
+  assert.equal(calls, 2);
+});
+
+test('request: 401 không retry (key sai thì thử lại vô nghĩa)', async () => {
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    return jsonResponse({ error: { message: 'bad key' } }, 401);
+  };
+  await assert.rejects(() => request({ config: OPENAI, messages: MESSAGES, retryDelayMs: 0 }), /API key/);
+  assert.equal(calls, 1);
+});
+
+test('request: retries=0 thì không gọi lại', async () => {
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    return jsonResponse({ error: { message: 'oops' } }, 503);
+  };
+  await assert.rejects(() => request({ config: OPENAI, messages: MESSAGES, retries: 0 }), /Provider đang lỗi/);
+  assert.equal(calls, 1);
+});
+
+test('generate: 429 trước khi có chunk → retry và stream xong', async () => {
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    if (calls === 1) return { ok: false, status: 429, text: async () => '{"error":{"message":"slow down"}}' };
+    return streamResponse([sse({ choices: [{ delta: { content: 'hi' } }] }), 'data: [DONE]\n\n']);
+  };
+  const result = await generate({ config: OPENAI, messages: MESSAGES, retryDelayMs: 0 });
+  assert.equal(result.text, 'hi');
+  assert.equal(calls, 2);
+});
+
+test('generate: lỗi SAU khi đã có chunk → KHÔNG retry (tránh nhân đôi output)', async () => {
+  const encoder = new TextEncoder();
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    const body = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(sse({ choices: [{ delta: { content: 'a' } }] })));
+        controller.error(new Error('mạng đứt giữa stream'));
+      },
+    });
+    return { ok: true, status: 200, body };
+  };
+
+  await assert.rejects(() => generate({ config: OPENAI, messages: MESSAGES, retryDelayMs: 0 }), /mạng đứt/);
+  assert.equal(calls, 1, 'không gọi lại khi đã phát chunk');
+});
+
+test('generate: AbortError không bị retry', async () => {
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    const error = new Error('aborted');
+    error.name = 'AbortError';
+    throw error;
+  };
+  const abort = new AbortController();
+  abort.abort();
+  await assert.rejects(
+    () => generate({ config: OPENAI, messages: MESSAGES, signal: abort.signal, retryDelayMs: 0 }),
+    (error) => error.name === 'AbortError',
+  );
+  assert.equal(calls, 1);
+});
+
+test('generate: stream treo quá idleTimeoutMs → báo timeout, không treo UI', async () => {
+  globalThis.fetch = async () => ({
+    ok: true,
+    status: 200,
+    body: { getReader: () => ({ read: () => new Promise(() => {}), releaseLock() {} }) },
+  });
+
+  await assert.rejects(
+    () => generate({ config: OPENAI, messages: MESSAGES, idleTimeoutMs: 30, retries: 0 }),
+    /không phản hồi sau/,
+  );
 });

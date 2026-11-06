@@ -78,6 +78,38 @@
         <p class="hint" id="direction-hint"></p>
       </section>
 
+      <section class="card">
+        <h2>Ghi chú riêng cho AI</h2>
+        <label class="field" for="customInstructions">
+          <span class="label">Dặn dò thường dùng (không bắt buộc)</span>
+          <textarea
+            id="customInstructions"
+            rows="3"
+            maxlength="300"
+            placeholder="Ví dụ: Không dùng em dash. Gọi tôi là Phong. Câu ngắn thôi."
+          ></textarea>
+        </label>
+        <p class="hint">
+          Được chèn vào cuối system prompt mỗi lần viết lại (tối đa 300 ký tự). Đừng đặt quy tắc trái với yêu cầu
+          "chỉ viết lại, không thêm nội dung".
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>Chia sẻ cấu hình</h2>
+        <label class="field" for="settings-json">
+          <span class="label">JSON cấu hình (không có API key)</span>
+          <textarea id="settings-json" rows="5" spellcheck="false" placeholder='{"provider":"openai", …}'></textarea>
+        </label>
+        <div class="row-actions">
+          <button id="export-settings" class="ghost small" type="button">Xuất ra ô</button>
+          <button id="import-settings" class="ghost small" type="button">Nhập từ ô</button>
+        </div>
+        <p class="hint">Dùng để chuyển cấu hình giữa extension và bản web. Không bao giờ chứa API key.</p>
+      </section>
+
+      <p class="hint" id="version-hint"></p>
+
       <div class="bar-actions">
         <button id="save" class="primary" type="button">Lưu</button>
         <button id="test" class="ghost" type="button">Kiểm tra kết nối</button>

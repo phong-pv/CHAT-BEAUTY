@@ -31,6 +31,17 @@ Không sửa nội dung ADR cũ — thay đổi thì tạo ADR mới và ghi `Su
 | 24 | 2026-11-05 | Version **1.0.0** cho MVP; zip phát hành chỉ chứa runtime, loại `docs/` + `scripts/` + test | [0001](./adr/0001-manifest-v3-vanilla-js-no-bundler.md) | Accepted |
 | 25 | 2026-11-05 | Bản web `web/` **dùng chung** `lib/prompt.js` + `lib/providers.js`, chỉ thay lớp lưu trữ (`localStorage`, cùng schema) — không fork logic | [0001](./adr/0001-manifest-v3-vanilla-js-no-bundler.md) | Accepted |
 | 26 | 2026-11-05 | **Không** port Safari web extension ở MVP (cần macOS + Xcode + 99 USD/năm); thay bằng bản web + Shortcut recipe: [ios.md](./ios.md) | — | Accepted |
+| 27 | 2026-11-05 | **Phát hiện output bị cắt**: đọc `finish_reason` cả 3 protocol, trả `truncated`; UI tự retry 1 lần với budget ×2, vẫn cụt thì cảnh báo `warn`; cảnh báo thêm khi output < 40% input (en-polish) | — | Accepted |
+| 28 | 2026-11-05 | `maxTokensFor` = **min 1024 / cap 4000** (trước: min…1600, sát → cụt). `max_tokens` là trần, không phải chi phí | [../docs/prompting.md](../docs/prompting.md) | Accepted |
+| 29 | 2026-11-05 | Retry **1 lần** cho 429/5xx/lỗi mạng, chỉ khi **chưa nhận chunk** + không phải AbortError; idle timeout stream **30s** | — | Accepted |
+| 30 | 2026-11-05 | `PROMPT_VERSION` export từ `lib/prompt.js`, hiện trong tooltip badge / Options / bản web | — | Accepted |
+| 31 | 2026-11-05 | CI GitHub Actions chỉ chạy `npm test` + `npm run pack` + `unzip -t`, **không** secret, không build | [0001](./adr/0001-manifest-v3-vanilla-js-no-bundler.md) | Accepted |
+| 32 | 2026-11-06 | Diff highlight: LCS theo **từ**, cap 1200 token/chiều (tránh O(n·m) nổ), render bằng `textContent` (chống HTML injection); chỉ bật cho `en-polish` | — | Accepted |
+| 33 | 2026-11-06 | Lịch sử: FIFO **30 mục** trong `chrome.storage.local['history']` (web: `localStorage`), chuẩn hoá + cắt 8000 ký tự/mục, có xoá từng mục & xoá hết | — | Accepted |
+| 34 | 2026-11-06 | `customInstructions` ≤300 ký tự, chèn cuối system prompt trong `<prefs>` (dữ liệu, không phải chỉ dẫn hệ thống) | — | Accepted |
+| 35 | 2026-11-06 | Export/import settings **không bao giờ** chứa `apiKey`; import validate provider/tone/direction | [0002](./adr/0002-byok-key-in-storage-local.md) | Accepted |
+| 36 | 2026-11-06 | **Thay đổi so với #19**: explain chuyển sang **stream** (`generate()`), bullet render dần; vẫn `temperature: 0`, `maxTokens: 400` | — | Accepted |
+| 37 | 2026-11-06 | `.label-row` cho phép wrap + `.label` nowrap (3 nút + badge không còn làm nhãn "KẾT QUẢ" xuống dòng xấu) | — | Accepted |
 
 
 ## Câu hỏi mở

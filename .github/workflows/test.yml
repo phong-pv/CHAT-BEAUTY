@@ -1,0 +1,26 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Không có dependency runtime nên không cần npm ci
+      - name: Unit tests (lib + web/store)
+        run: npm test
+
+      - name: Đóng gói extension
+        run: npm run pack
+
+      - name: Kiểm tra file zip
+        run: unzip -t dist/*.zip

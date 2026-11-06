@@ -17,6 +17,10 @@
 
 | **Explain changes** | Request phụ (không stream, `temperature: 0`) trả 2–4 bullet tiếng Việt vì sao text được sửa. Nhãn UI: "Giải thích" | "diff", "analysis" |
 | **Bullet** | Một dòng giải thích; `toBullets()` bỏ tiền tố `-`/`*`/`•`/`1.`, tối đa 6 dòng | "item", "line" |
+| **Diff** | Chế độ "Hiện thay đổi": so sánh input vs output theo từ (`lib/diff.js`), chỉ dùng cho `en-polish`. Nhãn UI: "Hiện thay đổi" / "Ẩn thay đổi" | "compare", "history diff" |
+| **History** | 30 lần viết lại gần nhất lưu local (`lib/history.js`), có nạp lại / xoá từng mục / xoá hết | "cache", "log" |
+| **Custom instructions** | Ghi chú riêng của user (≤300 ký tự) chèn cuối system prompt trong `<prefs>` | "system prompt của user", "prompt riêng" |
+| **Export/Import settings** | JSON cấu hình (không có apiKey) để chuyển giữa extension và bản web | "backup key" (không đúng — không có key) |
 | **Mock mode** | Chế độ không gọi API: trả kết quả giả để test UI khi chưa nhập key | "demo", "fake" |
 | **Streaming** | Nhận và hiển thị kết quả dần theo chunk (SSE) thay vì chờ toàn bộ | "realtime" |
 | **Settings** | Object `{v:1, provider, baseUrl, model, apiKey, tone}` trong `chrome.storage.local`, key là `settings` | "config" (docs dùng "settings") |

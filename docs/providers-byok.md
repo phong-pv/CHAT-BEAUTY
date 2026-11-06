@@ -67,6 +67,13 @@ Chi tiết header theo protocol (đã kiểm bằng test):
 - `gemini`: `streamGenerateContent?alt=sse` → `candidates[0].content.parts[].text` (nối các part trong cùng chunk).
 - `anthropic`: `stream:true` → chỉ lấy event `type === 'content_block_delta'` → `delta.text`; bỏ qua `message_start`, `content_block_start`, `message_stop`.
 - Parser chịu được: chunk cắt **giữa dòng**, dòng rỗng, comment `: ping`, CRLF, `data: [DONE]` (dừng ngay), JSON hỏng (bỏ qua chunk đó, stream vẫn tiếp).
+- **`finish_reason`**: đọc ở cả 3 protocol (`choices[].finish_reason` · `candidates[].finishReason` ·
+  `message_delta.delta.stop_reason`). `generate()`/`request()` trả `{finishReason, truncated}`;
+  `truncated = true` khi reason là `length`/`max_tokens`/`MAX_TOKENS`/`max_output_tokens`.
+  UI tự **retry 1 lần với budget ×2** rồi mới cảnh báo — vì output cụt mà im lặng là lỗi tệ nhất.
+- **Retry**: lỗi tạm thời (429/5xx/lỗi mạng) được thử lại **1 lần**, backoff 800ms, **chỉ khi chưa nhận chunk nào**
+  và user không bấm Dừng. Lỗi 401/402/404 không retry (thử lại vô nghĩa). `testConnection()` đặt `retries: 0`.
+- **Timeout**: không có chunk nào trong **30s** → bỏ với message "Provider không phản hồi sau 30s." (không để UI treo).
 - Provider/môi trường không trả `response.body` → fallback đọc JSON một lần rồi `onDelta(wholeText)`.
 - Bảo vệ: stream không có payload hợp lệ → "Provider không trả về dữ liệu stream hợp lệ."; text rỗng → "Model trả về nội dung rỗng. Thử lại hoặc đổi model."
 - `signal.aborted` được kiểm tra mỗi chunk → ném `AbortError`, phần đã nhận **vẫn giữ** trong UI.
@@ -101,4 +108,20 @@ Trước khi gọi, Options xin host permission cho `originPattern(baseUrl)`; b�
 - Xuất/nhập settings **không** bao gồm key (chưa làm, ghi nhận khi thêm tính năng export).
 - `host_permissions` tĩnh cho origin của preset; `optional_host_permissions` cho base URL lạ, xin quyền **trong click handler**
   (Lưu / Kiểm tra kết nối) — `chrome.permissions.request` bắt buộc có user gesture.
+
+## 8. Kiểm chứng với provider thật — `npm run verify:provider`
+
+Script `scripts/verify-provider.mjs` chạy bằng Node, dùng chính `lib/providers.js` + `lib/prompt.js` của extension
+nên kiểm đúng đường code thật, không cần mở Chrome.
+
+```bash
+npm run verify:provider -- --provider groq --key gsk_xxx
+npm run verify:provider -- --provider custom --base-url http://localhost:8099/v1 --model mock-1 --key sk-x
+CHATBEAUTY_PROVIDER=openai CHATBEAUTY_KEY=sk-xxx npm run verify:provider
+```
+
+Nó chạy 3 bước và in kết quả từng bước: `test connection` → `viết lại` (stream, in `finish=`/số chunk/ký tự) →
+`giải thích` (bullet). Exit code 1 nếu có bước lỗi. Key luôn được mask (`sk-m…3456`).
+
+Dùng script này khi: đổi preset/model id, nghi CORS, hoặc cập nhật docs sau khi provider đổi API.
 

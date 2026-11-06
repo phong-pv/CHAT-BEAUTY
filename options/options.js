@@ -1,6 +1,6 @@
-import { DIRECTIONS, TONES } from '../lib/prompt.js';
+import { DIRECTIONS, PROMPT_VERSION, TONES } from '../lib/prompt.js';
 import { PROVIDER_PRESETS, originPattern, testConnection, validateConfig } from '../lib/providers.js';
-import { clearApiKey, getSettings, maskKey, saveSettings } from '../lib/storage.js';
+import { SCHEMA_VERSION, clearApiKey, exportSettings, getSettings, maskKey, parseSettingsJson, saveSettings } from '../lib/storage.js';
 import { $, setStatus, showToast } from '../lib/ui.js';
 
 const els = {
@@ -15,6 +15,11 @@ const els = {
   tone: $('#tone'),
   direction: $('#direction'),
   directionHint: $('#direction-hint'),
+  customInstructions: $('#customInstructions'),
+  settingsJson: $('#settings-json'),
+  exportSettings: $('#export-settings'),
+  importSettings: $('#import-settings'),
+  versionHint: $('#version-hint'),
   save: $('#save'),
   test: $('#test'),
   status: $('#status'),
@@ -34,6 +39,8 @@ els.direction.addEventListener('change', renderDirectionHint);
 els.save.addEventListener('click', onSave);
 els.test.addEventListener('click', onTest);
 els.clearKey.addEventListener('click', onClearKey);
+els.exportSettings.addEventListener('click', onExportSettings);
+els.importSettings.addEventListener('click', onImportSettings);
 
 init();
 
@@ -50,10 +57,13 @@ async function init() {
   els.model.value = currentSettings.model;
   els.tone.value = currentSettings.tone;
   els.direction.value = currentSettings.direction;
+  els.customInstructions.value = currentSettings.customInstructions ?? '';
 
   renderKeyMask(currentSettings.apiKey);
   renderPresetHint(els.provider.value);
   renderDirectionHint();
+  const version = chrome?.runtime?.getManifest?.()?.version ?? '';
+  els.versionHint.textContent = `prompt ${PROMPT_VERSION} · settings schema v${SCHEMA_VERSION}${version ? ` · ChatBeauty ${version}` : ''}`;
 }
 
 function onProviderChange() {
@@ -145,6 +155,7 @@ async function onSave() {
       apiKey: config.apiKey,
       tone: els.tone.value,
       direction: els.direction.value,
+      customInstructions: els.customInstructions.value.trim(),
     });
     els.apiKey.value = '';
     renderKeyMask(currentSettings.apiKey);
@@ -190,5 +201,35 @@ async function onClearKey() {
     showToast('Đã xoá key');
   } catch (error) {
     setStatus(els.status, `Không xoá được: ${error?.message ?? error}`, 'error');
+  }
+}
+
+/** Đổ settings vào form (dùng sau khi nhập JSON). */
+function fillForm(settings) {
+  els.provider.value = PROVIDER_PRESETS[settings.provider] ? settings.provider : 'custom';
+  els.baseUrl.value = settings.baseUrl;
+  els.model.value = settings.model;
+  els.tone.value = settings.tone;
+  els.direction.value = settings.direction;
+  els.customInstructions.value = settings.customInstructions ?? '';
+  renderKeyMask(settings.apiKey);
+  renderPresetHint(els.provider.value);
+  renderDirectionHint();
+}
+
+function onExportSettings() {
+  els.settingsJson.value = exportSettings(currentSettings ?? undefined);
+  setStatus(els.status, 'Đã xuất cấu hình ra ô JSON (không có API key).', 'ok');
+}
+
+async function onImportSettings() {
+  try {
+    const patch = parseSettingsJson(els.settingsJson.value);
+    currentSettings = await saveSettings(patch);
+    fillForm(currentSettings);
+    setStatus(els.status, 'Đã nhập cấu hình từ JSON.', 'ok');
+    showToast('Đã nhập');
+  } catch (error) {
+    setStatus(els.status, error?.message ?? String(error), 'error');
   }
 }

@@ -2,8 +2,10 @@
 // nhưng lưu bằng localStorage thay vì chrome.storage. Không chứa key ở server — key
 // chỉ nằm trong localStorage của chính trang này.
 import { normalizeSettings } from '../lib/storage.js';
+import { makeHistory } from '../lib/history.js';
 
 const STORAGE_KEY = 'chatbeauty.settings';
+const HISTORY_KEY = 'chatbeauty.history';
 
 /** @returns {ReturnType<typeof normalizeSettings>} */
 export function getSettings() {
@@ -25,3 +27,21 @@ export function saveSettings(patch) {
   }
   return next;
 }
+
+/** Lịch sử trên bản web (localStorage, cùng logic FIFO 30 mục với extension). */
+export const historyStore = makeHistory({
+  read: () => {
+    try {
+      return JSON.parse(window.localStorage.getItem(HISTORY_KEY) ?? '[]');
+    } catch {
+      return [];
+    }
+  },
+  write: (items) => {
+    try {
+      window.localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
+    } catch {
+      /* bỏ qua */
+    }
+  },
+});

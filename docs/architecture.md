@@ -34,7 +34,9 @@
 | `lib/storage.js` | Schema versioned `{v:1,…}`, default values, get/save, mask key, `hasApiKey` | Không chứa logic HTTP |
 | `lib/providers.js` | Preset, validate config, build request/header mỗi protocol, parse response, `generate()` streaming SSE, map lỗi | Không chạm DOM, không đọc storage (nhận config qua tham số) |
 | `lib/prompt.js` | Tone, direction, auto-detect tiếng Việt, (P3) system prompt + `buildMessages` | Không gọi mạng |
-| `lib/ui.js` | DOM helper, toast, copy, status line | Không gọi mạng |
+| `lib/ui.js` | DOM helper, toast, copy, status line, `renderDiff()` | Không gọi mạng |
+| `lib/diff.js` | So sánh từ-level (LCS, cap 1200 token) cho tính năng "Hiện thay đổi" | Không chạm DOM, không gọi mạng |
+| `lib/history.js` | Logic lịch sử 30 mục, nhận storage adapter (`read`/`write`) để dùng chung extension + web | Không tự đọc `chrome.*`/`localStorage` |
 | `css/theme.css` | Token màu (light/dark) + style form/button dùng chung cho popup và options | Không chứa layout riêng của trang |
 | `web/web.js` + `web/store.js` | Bản web cho iPhone/Safari: cùng UI logic, lưu settings bằng `localStorage` (cùng schema) | Không gọi `chrome.*`; không có mock mode |
 
@@ -74,7 +76,14 @@ bằng Node với `fetch` stub, không cần Chrome. Xem `scripts/test-providers
 ```js
 { v: 1, provider: 'openai', protocol: 'openai',
   baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini',
-  apiKey: 'sk-…', tone: 'natural', direction: 'auto' }
+  apiKey: 'sk-…', tone: 'natural', direction: 'auto',
+  customInstructions: '' }
+```
+
+`chrome.storage.local['history']` (P4/U3, tối đa 30 mục, không chứa key):
+
+```js
+[{ ts: 1762…, input: '…', output: '…', tone: 'natural', direction: 'en-polish', model: 'gpt-4o-mini' }]
 ```
 
 `direction ∈ {auto, vi-to-en, en-polish}` · `tone ∈ TONES` · `protocol ∈ {openai, gemini, anthropic}`.

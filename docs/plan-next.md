@@ -16,10 +16,10 @@ theo thứ tự nào, và mỗi cái tốn gì.
 
 | # | Nợ | Ảnh hưởng thực tế | Xử lý ở |
 |---|---|---|---|
-| T1 | **Chưa từng gọi provider thật** bằng key thật | model id Gemini/Anthropic hoặc CORS có thể sai mà không biết | R1 |
-| T2 | Không retry, không timeout khi stream | 429/5xx hoặc mạng chập → user thấy "treo" rồi phải tự bấm lại | R2 |
-| T3 | Không có CI | Regression chỉ phát hiện khi chạy tay | R3 |
-| T4 | Prompt không có version | Kết quả tệ không biết do model hay do prompt | R4 |
+| T1 | **Chưa từng gọi provider thật** bằng key thật | model id Gemini/Anthropic hoặc CORS có thể sai mà không biết | R1 ✅ |
+| T2 | Không retry, không timeout khi stream | 429/5xx hoặc mạng chập → user thấy "treo" rồi phải tự bấm lại | R2 ✅ |
+| T3 | Không có CI | Regression chỉ phát hiện khi chạy tay | R3 ✅ |
+| T4 | Prompt không có version | Kết quả tệ không biết do model hay do prompt | R4 ✅ |
 | T5 | Settings extension ↔ bản web không đồng bộ | phải nhập key 2 lần | U7 |
 | T6 | Explain không stream, chờ 1 cục | cảm giác chậm khi mạng yếu | U6 |
 | T7 | Không có lịch sử | viết lại xong lỡ tay là mất bản cũ | U3 |
@@ -28,16 +28,24 @@ theo thứ tự nào, và mỗi cái tốn gì.
 
 ## 3. Roadmap
 
-| Bản | Chủ đề | Nội dung | Effort | Điều kiện xong |
+| Bản | Chủ đề | Nội dung | Effort | Trạng thái |
 |---|---|---|---|---|
-| **v1.1** | Tin cậy & đo được | R1 verify script · R2 retry/timeout · R3 CI · R4 prompt version | ~nửa ngày | Chạy thật được với ≥2 provider, có log verify, CI xanh |
-| **v1.2** | Dùng thích hơn | U1 diff highlight · U2 custom instructions · U3 history · U5 keyboard · U6 explain stream · U7 export settings | 1–2 ngày | Dùng hằng ngày không thấy vướng |
-| **v2.0** | Sâu hơn | X1 side panel · X2 context menu · X3 Anh→Việt + auto đa ngôn ngữ · X5 E2E | 3–5 ngày | Không còn mất kết quả khi đóng popup; dùng được khi đang chat ở trang khác |
-| **v2.x** | Phát hành | X4 Chrome Web Store (privacy policy, screenshot, listing) | ~nửa ngày + 5 USD | Extension public, review pass |
+| **v1.1** | Tin cậy & đo được | R1 verify script · R2 retry/timeout · R3 CI · R4 prompt version | ~nửa ngày | ✅ **DONE 2026-11-05** |
+| **v1.2** | Dùng thích hơn | U1 diff highlight · U2 custom instructions · U3 history · U5 keyboard · U6 explain stream · U7 export settings | 1–2 ngày | ✅ **DONE 2026-11-06** |
+| **v2.0** | Sâu hơn | X1 side panel · X2 context menu · X3 Anh→Việt + auto đa ngôn ngữ · X5 E2E | 3–5 ngày | chưa làm |
+| **v2.x** | Phát hành | X4 Chrome Web Store (privacy policy, screenshot, listing) | ~nửa ngày + 5 USD | chưa làm |
 
 Effort: **S** ≤ 2 giờ · **M** nửa ngày · **L** 1–2 ngày.
 
-## 4. v1.1 — Tin cậy & đo được (làm trước)
+## 4. v1.1 — Tin cậy & đo được ✅ DONE (2026-11-05)
+
+Đã làm: **R1** `npm run verify:provider` · **R2** retry 1 lần + idle timeout 30s · **R3** CI
+(`.github/workflows/test.yml`) · **R4** `PROMPT_VERSION = 'v2'` (hiện trong tooltip badge, Options, bản web).
+
+Phát sinh khi chạy provider thật (ưu tiên cao hơn plan ban đầu): **output bị cắt im lặng** — model trả 1 câu rồi
+dừng, code cũ không đọc `finish_reason` nên không báo gì. Đã sửa: đọc `finish_reason` cả 3 protocol, tự retry
+1 lần với budget ×2 khi bị cắt, cảnh báo khi output < 40% input, nâng `maxTokensFor` lên **min 1024 / cap 4000**
+(trước đó 324 ký tự chỉ được 362 token). Chi tiết: [decisions.md](./decisions.md) #27.
 
 ### R1 · `npm run verify:provider` — script kiểm chứng với provider thật (S)
 
@@ -69,7 +77,21 @@ Effort: **S** ≤ 2 giờ · **M** nửa ngày · **L** 1–2 ngày.
 - Mục đích: sau này so kết quả "tệ hơn" thì biết prompt nào đang chạy.
 - **Done:** đổi version → hiện trong tooltip; test assert hằng số tồn tại.
 
-## 5. v1.2 — Dùng thích hơn
+## 5. v1.2 — Dùng thích hơn ✅ DONE (2026-11-06)
+
+Đã làm (version **1.1.0**, test 93):
+
+- **U1 diff highlight**: `lib/diff.js` (LCS theo từ, cap 1200 token) + `renderDiff()` trong `lib/ui.js`
+  (dựng `<span class="diff-add|diff-del">` bằng `textContent` → không HTML injection). Nút **Hiện thay đổi**
+  chỉ hiện khi `direction === 'en-polish'`.
+- **U2 custom instructions**: setting `customInstructions` (≤300 ký tự) → chèn vào cuối system prompt trong `<prefs>`;
+  UI ở Options + bản web.
+- **U3 lịch sử**: `lib/history.js` (`makeHistory({read, write})`, FIFO 30, chuẩn hoá + cắt 8000 ký tự) với adapter
+  `chrome.storage.local` (extension) và `localStorage` (web). UI: danh sách trong popup/web, nạp lại, xoá từng mục, xoá hết.
+- **U5 phím tắt**: `manifest.commands._execute_action` = `Alt+Shift+C`.
+- **U6 explain stream**: explain chuyển sang `generate()`; bullet hiện dần, Stop vẫn dừng được.
+- **U7 export/import**: `exportSettings()` / `parseSettingsJson()` trong `lib/storage.js` — **không bao giờ chứa apiKey**,
+  validate provider/tone/direction; UI ở Options + web.
 
 ### U1 · Diff highlight "đã đổi gì" (M)
 
