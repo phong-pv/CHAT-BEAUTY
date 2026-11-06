@@ -32,7 +32,7 @@ theo thứ tự nào, và mỗi cái tốn gì.
 |---|---|---|---|---|
 | **v1.1** | Tin cậy & đo được | R1 verify script · R2 retry/timeout · R3 CI · R4 prompt version | ~nửa ngày | ✅ **DONE 2026-11-05** |
 | **v1.2** | Dùng thích hơn | U1 diff highlight · U2 custom instructions · U3 history · U5 keyboard · U6 explain stream · U7 export settings | 1–2 ngày | ✅ **DONE 2026-11-06** |
-| **v2.0** | Sâu hơn | X1 side panel · X2 context menu · X3 Anh→Việt + auto đa ngôn ngữ · X5 E2E | 3–5 ngày | chưa làm |
+| **v2.0** | Sâu hơn | X1 side panel · X2 context menu · X3 Anh→Việt + auto đa ngôn ngữ · X5 E2E | 3–5 ngày | 🟡 X3 DONE · X1/X2/X5 chưa làm |
 | **v2.x** | Phát hành | X4 Chrome Web Store (privacy policy, screenshot, listing) | ~nửa ngày + 5 USD | chưa làm |
 
 Effort: **S** ≤ 2 giờ · **M** nửa ngày · **L** 1–2 ngày.
@@ -154,7 +154,14 @@ Hai hướng, **nên thử hướng rẻ trước**:
 - **Done:** bôi đen text trên bất kỳ trang → chuột phải → "Viết lại bằng ChatBeauty" → popup mở, đã có text.
 - Rủi ro: cảnh báo permission rộng hơn; nếu publish Web Store sẽ bị review kỹ hơn.
 
-### X3 · Anh → Việt + tự nhận diện ngôn ngữ khác (S–M)
+### X3 · Anh → Việt + tự nhận diện ngôn ngữ khác ✅ DONE (2026-11-06)
+
+- `DIRECTIONS` nay có 5 mục: `auto` · `vi-to-en` · `en-polish` · **`en-to-vi`** · **`other-to-en`**.
+- `looksNonLatin()`: nhận diện chữ không phải Latin (Nhật/Trung/Hàn/Thái/Lào/Myanmar/Khmer/Nga/Hebrew/Arabic/Devanagari),
+  cần ≥2 ký tự **và** ≥50% số ký tự Latin để không nhận nhầm "Tokyo 東京".
+- Base prompt **không còn hardcode "English"**; mỗi hướng khai báo `Target language: …` → `en-to-vi` ra tiếng Việt,
+  `other-to-en` ra tiếng Anh. `PROMPT_VERSION = 'v3'`.
+- Test: 6 test mới (detection Nhật/Trung/Hàn/Thái/Nga, không nhận nhầm tên riêng, target language từng hướng).
 
 - Thêm direction `en-to-vi` (nhãn "Anh → Việt") cho người Việt cần đọc/viết tiếng Việt.
 - Mở rộng auto: nếu text có ký tự CJK/Thai/Arabic… → `other-to-en` (dịch sang tiếng Anh), prompt thêm nhánh

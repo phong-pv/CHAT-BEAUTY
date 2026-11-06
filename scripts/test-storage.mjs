@@ -179,7 +179,7 @@ test('parseSettingsJson: JSON lỗi/không hợp lệ → throw message tiếng 
   assert.throws(() => parseSettingsJson('{}'), /Không có field nào/);
   assert.throws(() => parseSettingsJson('{"provider":"nope"}'), /provider không tồn tại/);
   assert.throws(() => parseSettingsJson('{"tone":"angry"}'), /tone không hợp lệ/);
-  assert.throws(() => parseSettingsJson('{"direction":"en-to-vi"}'), /direction không hợp lệ/);
+  assert.throws(() => parseSettingsJson('{"direction":"xx-to-yy"}'), /direction không hợp lệ/);
 });
 
 test('DEFAULT_SETTINGS có customInstructions rỗng', () => {

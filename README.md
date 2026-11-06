@@ -10,8 +10,8 @@ Dán tin nhắn  →  chọn giọng điệu / hướng  →  Viết lại  → 
 
 ## Tính năng
 
-- **Viết lại / dịch**: dán tiếng Anh (sửa ngữ pháp, câu từ) hoặc tiếng Việt (dịch + viết lại tự nhiên).
-- **Tự đoán hướng**: có tiếng Việt → dịch sang tiếng Anh, còn lại → sửa tiếng Anh. Đổi tay được bằng select **Hướng**.
+- **Viết lại / dịch**: dán tiếng Anh (sửa ngữ pháp, câu từ), tiếng Việt (dịch sang Anh), **hoặc ngôn ngữ khác** (Nhật/Trung/Hàn/Thái… → Anh).
+- **Hướng**: Tự động · Việt → Anh · Anh → Anh · **Anh → Việt** · **Khác → Anh** (đổi tay được bất cứ lúc nào).
 - **5 giọng điệu**: Natural · Professional · Casual · Concise · Friendly.
 - **Streaming**: kết quả hiện dần, bấm **Dừng** (hoặc `Esc`) là ngắt, giữ phần đã nhận.
 - **Hiện thay đổi** (diff): bôi màu phần thêm (gạch chân xanh) / phần bị bỏ (gạch ngang) — chỉ với chiều Anh → Anh.
@@ -134,6 +134,15 @@ Cấu trúc: `popup/` (UI chính) · `options/` (BYOK) · `lib/providers.js` (HT
 `docs/` (kiến trúc, ADR, plan, prompt spec).
 
 Không bundler, không runtime dependency — sửa file rồi **Reload** extension ở `chrome://extensions` là chạy.
+
+**Push lên GitHub** (repo này có nhiều account gh): nếu `git push` báo 403 dù đã login, kiểm tra account đang active:
+
+```bash
+gh auth status                  # xem account nào Active
+gh auth switch -u <owner-repo>   # đổi sang account sở hữu repo
+git push origin main
+gh auth switch -u <account-cu>   # trả lại như cũ nếu muốn
+```
 
 ## Giới hạn đã biết
 

@@ -10,6 +10,7 @@ import {
   TONES,
   buildExplainMessages,
   buildMessages,
+  looksNonLatin,
   looksVietnamese,
   maxTokensFor,
   resolveDirection,
@@ -24,7 +25,7 @@ test('TONES/DIRECTIONS: shape dùng cho UI', () => {
 
   assert.deepEqual(
     DIRECTIONS.map((item) => item.id),
-    ['auto', 'vi-to-en', 'en-polish'],
+    ['auto', 'vi-to-en', 'en-polish', 'en-to-vi', 'other-to-en'],
   );
   assert.equal(DEFAULT_DIRECTION, 'auto');
 });
@@ -47,6 +48,47 @@ test('resolveDirection: auto + override', () => {
   assert.equal(resolveDirection('toi muon hoi la ngay mai', 'auto'), 'vi-to-en');
   assert.equal(resolveDirection('Mình gửi lại nhé', 'en-polish'), 'en-polish', 'override thắng auto');
   assert.equal(resolveDirection('I will send it', 'vi-to-en'), 'vi-to-en');
+});
+
+test('looksNonLatin: nhận diện Nhật/Trung/Hàn/Thái/Nga', () => {
+  assert.equal(looksNonLatin('こんにちは、明日の会議は何時ですか？'), true);
+  assert.equal(looksNonLatin('你好，明天几点开会？'), true);
+  assert.equal(looksNonLatin('내일 회의 몇 시예요?'), true);
+  assert.equal(looksNonLatin('พรุ่งนี้ประชุมกี่โมง'), true);
+  assert.equal(looksNonLatin('Привет, во сколько завтра встреча?'), true);
+});
+
+test('looksNonLatin: tên riêng trong câu tiếng Anh không bị nhận nhầm', () => {
+  assert.equal(looksNonLatin('I will meet you in Tokyo 東京 tomorrow'), false);
+  assert.equal(looksNonLatin('I will send the file'), false);
+  assert.equal(looksNonLatin(''), false);
+  assert.equal(looksNonLatin('👍👍'), false, 'emoji không phải chữ');
+});
+
+test('resolveDirection: ngôn ngữ khác → other-to-en (X3)', () => {
+  assert.equal(resolveDirection('こんにちは、明日の会議は何時ですか？'), 'other-to-en');
+  assert.equal(resolveDirection('你好，明天几点开会？'), 'other-to-en');
+  assert.equal(resolveDirection('こんにちは', 'en-to-vi'), 'en-to-vi', 'override vẫn thắng auto');
+});
+
+test('systemFor: en-to-vi có target language tiếng Việt', () => {
+  const prompt = systemFor('en-to-vi', 'natural');
+  assert.match(prompt, /Target language: Vietnamese\./);
+  assert.match(prompt, /pronouns \(bạn \/ mình\)/);
+  assert.match(prompt, /must be Vietnamese/);
+  assert.ok(!/must be English/.test(prompt), 'không được ép output tiếng Anh');
+});
+
+test('systemFor: other-to-en dịch sang tiếng Anh', () => {
+  const prompt = systemFor('other-to-en', 'natural');
+  assert.match(prompt, /Target language: English\./);
+  assert.match(prompt, /language other than English/);
+});
+
+test('systemFor: mỗi hướng đều khai báo target language', () => {
+  for (const direction of ['vi-to-en', 'en-polish', 'en-to-vi', 'other-to-en']) {
+    assert.match(systemFor(direction, 'natural'), /Target language: /, direction);
+  }
 });
 
 test('systemFor: base + modifier hướng + tone', () => {

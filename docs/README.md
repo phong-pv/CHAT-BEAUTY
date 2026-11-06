@@ -23,7 +23,7 @@ Kết nối AI theo dạng **BYOK** (Bring Your Own Key), không backend, không
 - Đóng gói: `npm run pack` → `dist/chatbeauty-1.0.0.zip`. Hướng dẫn cài/sử dụng cho người dùng cuối: [`../README.md`](../README.md).
 - **Bản web cho iPhone/iPad**: `web/index.html` dùng chung `lib/prompt.js` + `lib/providers.js`, chỉ thay lớp lưu trữ
   bằng `localStorage` (`web/store.js`). Cách dùng + Shortcut + port Safari extension: [ios.md](./ios.md).
-- Test: `npm test` → **93 test** (providers 41 · prompt 18 · storage 17 · diff 8 · history 5 · web-store 4).
+- Test: `npm test` → **99 test** (providers 41 · prompt 24 · storage 17 · diff 8 · history 5 · web-store 4).
 - Kiểm chứng thật với provider: `npm run verify:provider -- --provider <id> --key <key>` → xem
   [providers-byok.md](./providers-byok.md) §8.
 - **Chưa verify với provider thật** (không có API key trong môi trường phát triển): model id Gemini/Anthropic,

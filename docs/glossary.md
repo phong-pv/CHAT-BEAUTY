@@ -12,6 +12,9 @@
 | **Auto-detect** | `resolveDirection()` đoán tiếng Việt bằng dấu tiếng Việt hoặc ≥2 từ tiếng Việt không dấu — chạy local, không tốn request | "language detection AI" |
 | **vi-to-en** | Dịch tiếng Việt sang tiếng Anh tự nhiên rồi polish | "translate mode" |
 | **en-polish** | Chỉ sửa ngữ pháp/câu từ của câu tiếng Anh, không đổi ngôn ngữ | "fix grammar" |
+| **en-to-vi** | Dịch tiếng Anh sang tiếng Việt tự nhiên (đại từ trung tính bạn/mình) | "reverse translate" |
+| **other-to-en** | Ngôn ngữ khác (Nhật/Trung/Hàn/Thái…) → tiếng Anh, model tự nhận diện | "auto translate" (không rõ hướng) |
+| **Target language** | Dòng đầu mỗi `DIRECTION_PROMPTS` khai báo ngôn ngữ đích (English / Vietnamese) | "output language" |
 | **Redaction** | Xoá API key khỏi text trước khi hiện ra (`redactSecrets`) vì provider có thể echo key trong lỗi | "encrypt" |
 | **Test connection** | Gọi 1 request ngắn (`maxTokens: 16`) để kiểm tra key/baseUrl/model trong Options | "ping", "health check" |
 

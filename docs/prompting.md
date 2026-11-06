@@ -5,19 +5,23 @@ Spec cho `lib/prompt.js` (`buildMessages` ở P3). Hiện file này mới có `T
 
 ## 1. Chọn hướng
 
-| `direction` (setting) | Hành vi |
-|---|---|
-| `auto` (mặc định) | `resolveDirection()` tự chọn: có tiếng Việt → `vi-to-en`, còn lại → `en-polish` |
-| `vi-to-en` | Luôn dịch + viết lại sang tiếng Anh |
-| `en-polish` | Luôn chỉ sửa ngữ pháp/câu từ của tiếng Anh |
+| `direction` (setting) | Hành vi | Target language |
+|---|---|---|
+| `auto` (mặc định) | `resolveDirection()` tự chọn: có tiếng Việt → `vi-to-en`; chữ không phải Latin (Nhật/Trung/Hàn/Thái/Cyrillic…) → `other-to-en`; còn lại → `en-polish` | theo hướng |
+| `vi-to-en` | Dịch + viết lại sang tiếng Anh | English |
+| `en-polish` | Chỉ sửa ngữ pháp/câu từ của tiếng Anh | English |
+| `en-to-vi` | Dịch sang tiếng Việt tự nhiên | Tiếng Việt |
+| `other-to-en` | Model tự nhận diện ngôn ngữ khác rồi dịch sang tiếng Anh | English |
 
-**Heuristic nhận diện tiếng Việt** (chạy local, không gọi API, xem `looksVietnamese`):
-1. Có ký tự có dấu tiếng Việt (`ă â đ ê ô ơ ư` + toàn bộ dấu thanh) → tiếng Việt.
-2. Không dấu: strip dấu bằng `normalize('NFD')` rồi đếm từ trong danh sách chọn lọc
-   (`khong, duoc, toi, minh, nhe, nha, giup, vay, muon, gi, cua, voi, nhieu, nao, hom, rat, hieu, hoi, ngay, lam, chao, bao, trong, ngoai, nho, dung, sai, gia, tien`).
-   **≥2 từ** khớp mới coi là tiếng Việt → tránh nhận nhầm câu tiếng Anh ("can", "the", "do"… không nằm trong list).
+**Heuristic nhận diện** (chạy local, không gọi API):
+1. `looksVietnamese()`: có dấu tiếng Việt, hoặc ≥2 từ tiếng Việt không dấu (whitelist chọn lọc để không nhận nhầm
+   "can", "the", "do"…).
+2. `looksNonLatin()`: đếm ký tự thuộc bảng chữ không phải Latin (Cyrillic, Hebrew, Arabic, Devanagari, Thái, Lào,
+   Myanmar, Khmer, Kana, Han, Hangul); cần **≥2 ký tự và ≥ 50% số ký tự Latin** → tránh nhận nhầm câu tiếng Anh
+   có tên riêng như "Tokyo 東京".
+3. Không khớp → `en-polish`.
 
-Sai nhận diện luôn sửa được bằng tay: user đổi select **Hướng** ngay trên popup (ghi vào settings).
+Sai nhận diện luôn sửa được bằng tay: select **Hướng** trên popup/bản web (ghi vào settings).
 
 ## 2. System prompt (đã implement trong `lib/prompt.js` — prompt v2, `PROMPT_VERSION = 'v2'`)
 
@@ -27,7 +31,7 @@ Tăng `PROMPT_VERSION` mỗi khi sửa nội dung prompt; version hiện trong t
 
 **Base** (mọi request viết lại/dịch):
 ```
-You are an editor that turns chat messages into clear, correct, natural English.
+You are an editor that turns chat messages into clear, correct, natural text.
 Apply the minimum change needed: fix what is wrong, keep what already works.
 
 Hard rules:
@@ -46,6 +50,7 @@ Hard rules:
 
 `vi-to-en`:
 ```
+Target language: English.
 The message is in Vietnamese, possibly mixed with English words. Translate it into English, then polish it.
 - Convey the intent, not word-for-word: write what a native English speaker would say in the same situation.
 - Keep names, places, product names and numbers unchanged.
@@ -57,9 +62,31 @@ The message is in Vietnamese, possibly mixed with English words. Translate it in
 
 `en-polish`:
 ```
+Target language: English.
 The message is already in English. Fix grammar, articles, tense, subject-verb agreement, prepositions, plurals and word choice.
 - Do not translate and do not switch language.
 - Prefer small edits over rewriting sentences that are already fine.
+```
+
+`en-to-vi`:
+```
+Target language: Vietnamese.
+The message is in English. Translate it into natural Vietnamese, then polish it.
+- Write what a Vietnamese speaker would actually say, not a literal translation.
+- Keep names, product names, numbers, links and emoji unchanged.
+- Choose polite, neutral pronouns (bạn / mình) unless the original clearly implies another relationship.
+- Do not add greetings, thanks or sign-offs the original did not have.
+- The output must be Vietnamese even if parts of the input were already Vietnamese.
+```
+
+`other-to-en`:
+```
+Target language: English.
+The message is in a language other than English. Detect that language, translate it into natural English, then polish it.
+- Convey the intent, not word-for-word: write what a native English speaker would say in the same situation.
+- Keep names, product names and numbers unchanged.
+- Do not add greetings, thanks or sign-offs the original did not have.
+- The output must be English.
 ```
 
 **Tone** (`TONE_PROMPTS`) — cả 5 tone đều có chỉ dẫn riêng (không còn tone rỗng):

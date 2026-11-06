@@ -42,6 +42,7 @@ Không sửa nội dung ADR cũ — thay đổi thì tạo ADR mới và ghi `Su
 | 35 | 2026-11-06 | Export/import settings **không bao giờ** chứa `apiKey`; import validate provider/tone/direction | [0002](./adr/0002-byok-key-in-storage-local.md) | Accepted |
 | 36 | 2026-11-06 | **Thay đổi so với #19**: explain chuyển sang **stream** (`generate()`), bullet render dần; vẫn `temperature: 0`, `maxTokens: 400` | — | Accepted |
 | 37 | 2026-11-06 | `.label-row` cho phép wrap + `.label` nowrap (3 nút + badge không còn làm nhãn "KẾT QUẢ" xuống dòng xấu) | — | Accepted |
+| 38 | 2026-11-06 | **X3**: 5 hướng (`auto`/`vi-to-en`/`en-polish`/`en-to-vi`/`other-to-en`); base prompt bỏ hardcode "English", mỗi hướng khai báo `Target language:`; `looksNonLatin()` cần ≥2 ký tự & ≥50% ký tự Latin; `PROMPT_VERSION = 'v3'` | [0004](./adr/0004-direction-auto-detect.md) | Accepted |
 
 
 ## Câu hỏi mở
